@@ -1,0 +1,9 @@
+﻿root = true
+[*]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+[*.cs]
+
+# IDE0290: Use primary constructor
+dotnet_diagnostic.IDE0290.severity = none
