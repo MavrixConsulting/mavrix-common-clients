@@ -33,6 +33,6 @@ jobs:
     - name: Test
       run: dotnet test src/Dataverse/Dataverse.csproj --no-build --verbosity normal
     - name: Pack
-      run: dotnet pack src/Dataverse/Dataverse.csproj --no-build --configuration Release --output ./Artifacts
+      run: dotnet pack src/Dataverse/Dataverse.csproj --no-build --configuration Release --output ./Artifacts --include-symbols
     - name: Publish
-      run: dotnet nuget push ./Artifacts/*.nupkg --skip-duplicate
+      run: dotnet nuget push ./Artifacts/*.{nupkg,snupkg} --skip-duplicate
