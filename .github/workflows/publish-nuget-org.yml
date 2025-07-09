@@ -1,0 +1,40 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Publish Mavrix.Common.Dataverse
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Extract Tag
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore src/Dataverse/Dataverse.csproj
+      
+    - name: Build and Pack
+      run: |
+        dotnet build src/Dataverse/Dataverse.csproj --no-restore --configuration Release
+        dotnet pack src/Dataverse/Dataverse.csproj --configuration Release --output ./Artifacts /p:Version=$VERSION --include-symbols
+        
+    - name: Push to nuget.org
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ./Artifacts/*.{nupkg,snupkg} --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
