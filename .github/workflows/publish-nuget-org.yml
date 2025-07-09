@@ -34,7 +34,12 @@ jobs:
         dotnet build src/Dataverse/Dataverse.csproj --no-restore --configuration Release
         dotnet pack src/Dataverse/Dataverse.csproj --configuration Release --output ./Artifacts /p:Version=$VERSION --include-symbols
         
-    - name: Push to nuget.org
+    - name: Push nupkg to nuget.org
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push ./Artifacts/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Push snupkg to nuget.org
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push ./Artifacts/*.snupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
