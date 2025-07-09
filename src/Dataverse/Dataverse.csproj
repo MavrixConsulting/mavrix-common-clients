@@ -14,7 +14,6 @@
     <RepositoryType>git</RepositoryType>
     <Version>1.0.0-beta</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
