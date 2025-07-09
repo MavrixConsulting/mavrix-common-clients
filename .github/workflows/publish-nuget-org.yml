@@ -18,8 +18,8 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Extract Tag
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+    - name: Extract Tag version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
