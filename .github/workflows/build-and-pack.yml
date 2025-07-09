@@ -35,6 +35,4 @@ jobs:
     - name: Pack
       run: dotnet pack src/Dataverse/Dataverse.csproj --no-build --configuration Release --output ./Artifacts --include-symbols
     - name: Publish nupkg
-      run: dotnet nuget push ./Artifacts/*.nupkg --skip-duplicate
-    - name: Publish snupkg
-      run: dotnet nuget push ./Artifacts/*.snupkg --skip-duplicate
+      run: dotnet nuget push ./Artifacts/*.{nupkg,snupkg} --skip-duplicate
