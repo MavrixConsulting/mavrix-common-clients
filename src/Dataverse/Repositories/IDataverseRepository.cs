@@ -13,5 +13,6 @@ namespace Mavrix.Common.Dataverse.Repositories
 		IAsyncEnumerable<T> GetListAsync(DataverseQueryBuilder queryBuilder, CancellationToken cancellationToken);
 		ValueTask UpdateAsync(Guid key, T record, CancellationToken cancellationToken);
 		ValueTask UpsertAsync(Guid key, T record, CancellationToken cancellationToken);
+		ValueTask RemoveReferenceValueAsync(Guid key, string propertyName, CancellationToken cancellationToken);
 	}
 }

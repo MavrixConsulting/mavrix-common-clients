@@ -10,7 +10,26 @@ on:
     branches: [ "main" ]
 
 jobs:
+  validate-lock:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+    - name: Validate lock files (no drift)
+      run: |
+        # Restore in locked mode to ensure packages.lock.json files are in sync.
+        # This will fail if any transitive dependency would change or a lock file is missing.
+        dotnet restore Mavrix.Common.sln --locked-mode
+
   build-and-publish:
+    needs: validate-lock
 
     runs-on: ubuntu-latest
     permissions:
@@ -26,12 +45,12 @@ jobs:
         source-url: https://nuget.pkg.github.com/MavrixConsulting/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
-    - name: Restore dependencies
-      run: dotnet restore src/Dataverse/Dataverse.csproj
+    - name: Restore dependencies (locked mode already validated)
+      run: dotnet restore src/Dataverse/Dataverse.csproj --locked-mode
     - name: Build
       run: dotnet build src/Dataverse/Dataverse.csproj --no-restore --configuration Release
     - name: Test
-      run: dotnet test src/Dataverse/Dataverse.csproj --no-build --verbosity normal
+      run: dotnet test tests/Mavrix.Common.Dataverse.Tests/Mavrix.Common.Dataverse.Tests.csproj --no-build --verbosity normal
     - name: Pack
       run: dotnet pack src/Dataverse/Dataverse.csproj --no-build --configuration Release --output ./Artifacts --include-symbols
     - name: Publish nupkg

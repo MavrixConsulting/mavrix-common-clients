@@ -124,7 +124,7 @@ namespace Mavrix.Common.Dataverse.Repositories
 
 		public async ValueTask AssociateLinkEntityAsync(Guid sourceKey, string relationshipName, string targetSetName, Guid targetKey, CancellationToken cancellationToken)
 		{
-			var uri = $"{_setName}{sourceKey}/{relationshipName}/$ref";
+			var uri = $"{_setName}({sourceKey})/{relationshipName}/$ref";
 			var linkUri = $"{_client.ApiUrl}/{targetSetName}({targetKey})";
 
 			var linkEntity = new LinkEntity { EntityId = linkUri };
@@ -143,6 +143,12 @@ namespace Mavrix.Common.Dataverse.Repositories
 		public async ValueTask DisassociateLinkEntityAsync(Guid sourceKey, string relationshipName, Guid targetKey, CancellationToken cancellationToken)
 		{
 			var uri = $"{_setName}{sourceKey}/{relationshipName}({targetKey})/$ref";
+			await _client.DeleteAsync(uri, cancellationToken);
+		}
+
+		public async ValueTask RemoveReferenceValueAsync(Guid key, string propertyName, CancellationToken cancellationToken)
+		{
+			var uri = $"{_setName}({key})/{propertyName}/$ref";
 			await _client.DeleteAsync(uri, cancellationToken);
 		}
 	}

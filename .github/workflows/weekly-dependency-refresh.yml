@@ -1,0 +1,81 @@
+name: Weekly Dependency Refresh
+
+on:
+  schedule:
+    # Every Monday at 03:00 UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: weekly-dependency-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh-lock-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore (update lock files)
+        run: |
+          # Normal restore (NOT locked-mode) to allow transitive updates within version ranges
+            dotnet restore Mavrix.Common.sln
+
+      - name: Build & Test (sanity check)
+        run: |
+          dotnet build Mavrix.Common.sln --configuration Release --no-restore
+          dotnet test tests/Mavrix.Common.Dataverse.Tests/Mavrix.Common.Dataverse.Tests.csproj --no-build --verbosity minimal
+
+      - name: Generate dependency report
+        run: |
+          echo '## Dependency Report' > pr_body.md
+          echo '' >> pr_body.md
+          echo '### Outdated (direct & transitive) for library project' >> pr_body.md
+          echo '```' >> pr_body.md
+          dotnet list src/Dataverse/Dataverse.csproj package --outdated || true >> pr_body.md
+          echo '```' >> pr_body.md
+          echo '' >> pr_body.md
+          echo '### Vulnerable (if any)' >> pr_body.md
+          echo '```' >> pr_body.md
+          dotnet list src/Dataverse/Dataverse.csproj package --vulnerable || true >> pr_body.md
+          echo '```' >> pr_body.md
+          echo '' >> pr_body.md
+          echo '> This PR was generated automatically. Lock file updates are limited by the version ranges declared in the csproj.' >> pr_body.md
+
+      - name: Detect changes
+        id: diff
+        run: |
+          git add .
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(deps): weekly lock file update'
+          title: 'chore(deps): weekly dependency refresh'
+          body-path: pr_body.md
+          branch: chore/weekly-dependency-refresh
+          labels: dependencies
+          signoff: false
+          delete-branch: true
+
+      - name: No changes
+        if: steps.diff.outputs.changed != 'true'
+        run: echo "No dependency updates this week."

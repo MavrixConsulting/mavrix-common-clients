@@ -1,0 +1,6 @@
+<Project>
+  <!-- Enforce creation/update of packages.lock.json locally. CI uses locked-mode to detect drift. -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>

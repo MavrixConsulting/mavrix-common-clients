@@ -29,22 +29,23 @@ namespace Mavrix.Common.Dataverse.Clients
 
 		private readonly DataverseOptions _dataverseOptions;
 
-		private readonly ITokenProvider _tokenProvider;
+		private readonly IAzureTokenProvider _tokenProvider;
 
 		private readonly string Scope;
 		private readonly string ApiUrl;
 
 		string IDataverseHttpClient.ApiUrl => ApiUrl;
 
-		public DataverseHttpClient(ILogger<DataverseHttpClient> logger, HttpClient httpClient, IOptions<DataverseOptions> options, ITokenProvider tokenProvider)
+		public DataverseHttpClient(ILogger<DataverseHttpClient> logger, HttpClient httpClient, IOptions<DataverseOptions> options, IAzureTokenProvider tokenProvider)
 		{
 			_logger = logger;
 			_httpClient = httpClient;
 			_dataverseOptions = options.Value;
 			_tokenProvider = tokenProvider;
 
-			Scope = $"{_dataverseOptions.BaseUrl}/.default";
-			ApiUrl = $"{_dataverseOptions.BaseUrl}/api/data/v9.2";
+			var baseUrl = _dataverseOptions.BaseUrl.TrimEnd('/');
+			Scope = $"{baseUrl}/.default";
+			ApiUrl = $"{baseUrl}/api/data/v9.2";
 		}
 
 		internal static readonly KeyValuePair<string, string> IncludeAnnotations = new("Prefer", "odata.include-annotations=\"*\"");

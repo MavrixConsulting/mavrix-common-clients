@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Mavrix.Common.Dataverse.AuthenticationTokenProvider
 {
-	public class ManagedIdentityTokenProvider : ITokenProvider, IDisposable
+	public class ManagedIdentityTokenProvider : IAzureTokenProvider, IDisposable
 	{
 		private readonly TokenCredential _credential;
 		private readonly IMemoryCache _memoryCache;
