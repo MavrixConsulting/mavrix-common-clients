@@ -9,7 +9,23 @@ on:
       - 'v*.*.*'
 
 jobs:
+  validate-lock:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+    - name: Validate lock files (no drift)
+      run: dotnet restore Mavrix.Common.sln --locked-mode
+
   publish:
+    needs: validate-lock
 
     runs-on: ubuntu-latest
 
@@ -26,8 +42,8 @@ jobs:
       with:
         dotnet-version: 9.0.x
         
-    - name: Restore dependencies
-      run: dotnet restore src/Dataverse/Dataverse.csproj
+    - name: Restore dependencies (locked mode already validated)
+      run: dotnet restore src/Dataverse/Dataverse.csproj --locked-mode
       
     - name: Build and Pack
       run: |

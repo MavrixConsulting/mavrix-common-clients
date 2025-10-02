@@ -17,7 +17,7 @@ namespace Mavrix.Common.Dataverse
 		public static IServiceCollection AddDataverseClient(this IServiceCollection services, ConfigurationManager configuration)
 		{
 			services.AddMemoryCache();
-			services.TryAdd(ServiceDescriptor.Singleton<ITokenProvider, ManagedIdentityTokenProvider>());
+			services.TryAdd(ServiceDescriptor.Singleton<IAzureTokenProvider, ManagedIdentityTokenProvider>());
 
 			services.AddOptions();
 			services.Configure<DataverseOptions>(configuration.GetSection(DataverseOptions.SectionName));
