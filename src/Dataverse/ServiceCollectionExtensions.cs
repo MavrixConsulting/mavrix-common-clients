@@ -3,24 +3,32 @@ using Mavrix.Common.Dataverse.Clients;
 using Mavrix.Common.Dataverse.DTO;
 using Mavrix.Common.Dataverse.Options;
 using Mavrix.Common.Dataverse.Repositories;
+using Mavrix.Common.Dataverse.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Polly;
+using System.Text.Json;
 
 namespace Mavrix.Common.Dataverse
 {
 	public static class ServiceCollectionExtensions
 	{
-		public static IServiceCollection AddDataverseClient(this IServiceCollection services, ConfigurationManager configuration)
+		public static IServiceCollection AddDataverseClient(this IServiceCollection services, ConfigurationManager configuration, Action<JsonSerializerOptions>? configureSerializer = null)
 		{
 			services.AddMemoryCache();
 			services.TryAdd(ServiceDescriptor.Singleton<IAzureTokenProvider, ManagedIdentityTokenProvider>());
 
 			services.AddOptions();
 			services.Configure<DataverseOptions>(configuration.GetSection(DataverseOptions.SectionName));
+
+			services.AddSingleton(sp =>
+			{
+				var configurators = sp.GetServices<IDataverseJsonSerializerOptionsConfigurator>();
+				return DataverseJsonSerializerOptionsFactory.Create(configureSerializer, configurators);
+			});
 
 			services.AddHttpClient<IDataverseHttpClient, DataverseHttpClient>()
 				.AddTooManyRequestRetryHandler();
@@ -53,7 +61,18 @@ namespace Mavrix.Common.Dataverse
 
 		public static IServiceCollection AddDataverseRepository<T>(this IServiceCollection services) where T : DataverseTable
 		{
-			services.TryAdd(new ServiceDescriptor(typeof(IDataverseRepository<T>), typeof(DataverseRepository<T>), ServiceLifetime.Singleton));
+			services.TryAdd(new ServiceDescriptor(typeof(IDataverseRepository<T>), sp =>
+			{
+				var client = sp.GetRequiredService<IDataverseHttpClient>();
+				var options = sp.GetRequiredService<JsonSerializerOptions>();
+				return new DataverseRepository<T>(client, options);
+			}, ServiceLifetime.Singleton));
+			return services;
+		}
+
+		public static IServiceCollection AddDataverseJsonSerializerConfigurator(this IServiceCollection services, IDataverseJsonSerializerOptionsConfigurator configurator)
+		{
+			services.AddSingleton(configurator);
 			return services;
 		}
 	}

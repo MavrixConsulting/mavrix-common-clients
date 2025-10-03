@@ -12,7 +12,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/MavrixConsulting/mavrix-common-clients</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <IncludeSymbols>True</IncludeSymbols>

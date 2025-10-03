@@ -142,8 +142,55 @@ Throws:
 - `DataverseHttpClient.DataverseException` (Dataverse logical error; contains StatusCode, Code, Message)
 - `DataverseHttpClient.DataverseHttpClientException` (unexpected HTTP failure)
 
+## JSON Serialization Customization
+Default behavior:
+- Ignores null values (`JsonIgnoreCondition.WhenWritingNull`)
+- Skips serializing collections when they are null or empty
+- Leaves strings untouched (empty strings are written)
+
+You can customize the shared `JsonSerializerOptions` in two (combinable) ways:
+
+1. Inline configuration lambda (per application – passed to `AddDataverseClient`):
+```
+builder.Services.AddDataverseClient(builder.Configuration, opts =>
+{
+    opts.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    opts.WriteIndented = true;          // example
+    opts.Converters.Add(new JsonStringEnumConverter());
+});
+```
+
+2. One or more configurator classes implementing `IDataverseJsonSerializerOptionsConfigurator`:
+```
+public sealed class MyDataverseSerializerConfigurator : IDataverseJsonSerializerOptionsConfigurator
+{
+    public void Configure(JsonSerializerOptions options)
+    {
+        options.Converters.Add(new JsonStringEnumConverter());
+    }
+}
+
+builder.Services.AddDataverseJsonSerializerConfigurator(new MyDataverseSerializerConfigurator());
+
+builder.Services.AddDataverseClient(builder.Configuration); // builds options after configurators are registered
+```
+
+3. Combine both (lambda runs first, then each configurator in registration order):
+```
+builder.Services
+    .AddDataverseJsonSerializerConfigurator(new MyDataverseSerializerConfigurator())
+    .AddDataverseJsonSerializerConfigurator(new AnotherConfigurator())
+    .AddDataverseClient(builder.Configuration, opts =>
+    {
+        // Base tweaks; later configurators can override
+        opts.WriteIndented = true;
+    });
+```
+
+If you never call `AddDataverseJsonSerializerConfigurator` you still get sensible defaults (and optional lambda changes). If you only want configurators, omit the lambda. For more granular control over ordering, place logic in configurators instead of the lambda.
+
 ## Versioning
-Current preview: `1.0.0-beta`. Breaking changes => major increment.
+Current: `1.0.0`. Breaking changes => major increment.
 
 ## License
 MIT (see `LICENSE`).
