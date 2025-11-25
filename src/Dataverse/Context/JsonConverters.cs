@@ -88,6 +88,10 @@ namespace Mavrix.Common.Dataverse.Context
 							{
 								return JsonSerializer.Deserialize<ColumnSet>(root.GetRawText(), options);
 							}
+						case nameof(BooleanManagedProperty):
+							{
+								return JsonSerializer.Deserialize<BooleanManagedProperty>(root.GetRawText(), options);
+							}
 						default:
 							{
 								throw new JsonException($"Unexpected type: {type}");

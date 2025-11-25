@@ -1,5 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 namespace Mavrix.Common.Dataverse.Context
 {
 	public class OptionSetValue
@@ -37,7 +38,7 @@ namespace Mavrix.Common.Dataverse.Context
 			Referenced = 2
 		}
 
-		public EntityRole PrimaryEntityRole { get; set; }
+		public EntityRole? PrimaryEntityRole { get; set; }
 
 		public required string SchemaName { get; set; }
 	}
@@ -48,4 +49,12 @@ namespace Mavrix.Common.Dataverse.Context
 		public string[]? AttributeExpressions { get; set; }
 		public string[]? Columns { get; set; } = [];
 	}
+
+	public class BooleanManagedProperty
+	{
+		public bool CanBeChanged { get; set; }
+		public string? ManagedPropertyLogicalName { get; set; }
+		public bool Value { get; set; }
+	}
 }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
