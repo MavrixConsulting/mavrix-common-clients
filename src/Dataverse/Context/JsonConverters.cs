@@ -110,10 +110,22 @@ namespace Mavrix.Common.Dataverse.Context
 				JsonTokenType.True => true,
 				JsonTokenType.False => false,
 				JsonTokenType.Null => null,
-				JsonTokenType.StartArray => JsonSerializer.Deserialize<DataCollection>(ref reader, options),
+				JsonTokenType.StartArray => HandleArrayType(ref reader, options),
 				_ => throw new JsonException($"Unexpected token: {reader.TokenType}"),
 			};
 			#endregion
+		}
+
+		private static List<object?> HandleArrayType(ref Utf8JsonReader reader, JsonSerializerOptions options)
+		{
+			var list = new List<object?>();
+			while (reader.Read())
+			{
+				if (reader.TokenType == JsonTokenType.EndArray) break;
+				var value = ReadValue(ref reader, options);
+				list.Add(value);
+			}
+			return list;
 		}
 
 		private static object? HandleNumberType(ref Utf8JsonReader reader)
