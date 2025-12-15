@@ -127,6 +127,11 @@ Uses `DefaultAzureCredential` (Managed Identity, Service Principal, etc.). Ensur
 1. Managed Identity / App Registration has Dataverse Application User.
 2. Proper security role assigned.
 
+To supply your own token provider instead of registering `ManagedIdentityTokenProvider`, call `AddDataverseClient` with `useManagedIdentity: false`:
+```
+builder.Services.AddDataverseClient(builder.Configuration, useManagedIdentity: false);
+```
+
 ## Resilience & Logging
 - Automatic retry (HTTP 429) with exponential backoff (max 3).
 - `AddDataverseDefaultLoggingSettings()` suppresses noisy `HttpClient` traces (keeps warnings+).

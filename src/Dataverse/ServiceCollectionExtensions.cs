@@ -16,12 +16,20 @@ namespace Mavrix.Common.Dataverse
 {
 	public static class ServiceCollectionExtensions
 	{
-		public static IServiceCollection AddDataverseClient(this IServiceCollection services, ConfigurationManager configuration, Action<JsonSerializerOptions>? configureSerializer = null)
+		public static IServiceCollection AddDataverseClient(
+			this IServiceCollection services, 
+			ConfigurationManager configuration, 
+			Action<JsonSerializerOptions>? configureSerializer = null,
+			bool useManagedIdentity = true)
 		{
 			services.AddMemoryCache();
-			services.TryAdd(ServiceDescriptor.Singleton<IAzureTokenProvider, ManagedIdentityTokenProvider>());
-
 			services.AddOptions();
+
+			if (useManagedIdentity)
+			{
+				services.TryAdd(ServiceDescriptor.Singleton<IAzureTokenProvider, ManagedIdentityTokenProvider>());
+			}
+			
 			services.Configure<DataverseOptions>(configuration.GetSection(DataverseOptions.SectionName));
 
 			services.AddSingleton(sp =>
