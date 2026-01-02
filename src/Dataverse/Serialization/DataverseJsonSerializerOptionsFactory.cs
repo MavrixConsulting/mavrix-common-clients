@@ -5,8 +5,17 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Mavrix.Common.Dataverse.Serialization;
 
+/// <summary>
+/// Factory for creating <see cref="JsonSerializerOptions"/> configured for Dataverse payloads.
+/// </summary>
 public static class DataverseJsonSerializerOptionsFactory
 {
+	/// <summary>
+	/// Creates serializer options with Dataverse defaults and applies custom configurators.
+	/// </summary>
+	/// <param name="configureSerializer">Optional callback to customize the options.</param>
+	/// <param name="configurators">Registered configurators to apply sequentially.</param>
+	/// <returns>A configured <see cref="JsonSerializerOptions"/> instance.</returns>
 	public static JsonSerializerOptions Create(Action<JsonSerializerOptions>? configureSerializer,
 		IEnumerable<IDataverseJsonSerializerOptionsConfigurator> configurators)
 	{
