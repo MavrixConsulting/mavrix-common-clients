@@ -12,11 +12,14 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/MavrixConsulting/mavrix-common-clients</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
+	<RepositoryUrl>https://github.com/MavrixConsulting/mavrix-common-clients</RepositoryUrl>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Version>1.0.1</Version>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PackageId>Mavrix.Common.Dataverse</PackageId>
     <PackageTags>dataverse;powerplatform;dynamics365;crm;odata</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -37,8 +40,12 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
