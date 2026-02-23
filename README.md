@@ -1,6 +1,6 @@
 # Mavrix.Common.Dataverse
 
-A lightweight helper library for interacting with Microsoft Dataverse using .NET (net8.0 / net9.0).
+A lightweight helper library for interacting with Microsoft Dataverse using .NET (net8.0 / net9.0 / net10.0).
 Provides:
 - `IDataverseHttpClient` (Managed Identity auth & retry handling)
 - Generic repository `IDataverseRepository<T>` for CRUD, upsert, delete, associations
@@ -43,6 +43,48 @@ public class Account : DataverseTable
     [JsonPropertyName("name")] public string? Name { get; set; }
 }
 ```
+
+## Lookup Attributes in DTOs
+Use `Lookup<T>` for Dataverse single-valued navigation properties that need `@odata.bind` payloads.
+
+Define lookup columns on your DTO:
+```
+[DataverseSetName("contacts")]
+public class Contact : DataverseTable
+{
+    [JsonPropertyName("contactid")]
+    public override Guid? Id { get; set; }
+
+    [JsonPropertyName("ParentCustomerId_account@odata.bind")]
+    public Lookup<Account>? ParentCustomerIdAccount { get; set; }
+
+    [JsonPropertyName("ParentCustomerId_contact@odata.bind")]
+    public Lookup<Contact>? ParentCustomerIdContact { get; set; }
+
+    [JsonPropertyName("AccountId@odata.bind")]
+    public Lookup<Account>? AccountId { get; set; }
+}
+```
+
+Assign lookup values:
+```
+// By GUID (implicit conversion from Guid)
+contact.AccountId = accountId;
+
+// By nullable GUID (null => no value written because nulls are ignored)
+contact.ParentCustomerIdContact = maybeParentContactId;
+
+// By alternate key: /accounts(accountnumber='ACME-001')
+contact.AccountId = new Lookup<Account>("accountnumber", "ACME-001");
+
+// By raw key expression when needed
+contact.AccountId = new Lookup<Account>("accountnumber='ACME-001'");
+```
+
+Notes:
+- `T` in `Lookup<T>` must be a Dataverse table type with `[DataverseSetName("...")]`.
+- String key values are escaped automatically for single quotes.
+- Serialized output is written as the correct bind path (for example `/accounts(<key>)`).
 
 ## Basic CRUD
 ```
@@ -195,7 +237,7 @@ builder.Services
 If you never call `AddDataverseJsonSerializerConfigurator` you still get sensible defaults (and optional lambda changes). If you only want configurators, omit the lambda. For more granular control over ordering, place logic in configurators instead of the lambda.
 
 ## Versioning
-Current: `1.0.0`. Breaking changes => major increment.
+Current: `1.0.6`. Breaking changes => major increment.
 
 ## License
 MIT (see `LICENSE`).
