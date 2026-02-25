@@ -4,6 +4,7 @@ A lightweight helper library for interacting with Microsoft Dataverse using .NET
 Provides:
 - `IDataverseHttpClient` (Managed Identity auth & retry handling)
 - Generic repository `IDataverseRepository<T>` for CRUD, upsert, delete, associations
+- `IDataverseBatchService` for atomic multi-operation change sets across tables
 - Fluent OData query builder (select, filter, expand, order, apply, top, count, annotations)
 - DTO base + attribute (`DataverseTable` + `DataverseSetNameAttribute`)
 - Deserialization model for Dataverse RemoteExecutionContext (Service Bus plugin messages)
@@ -188,6 +189,63 @@ await _accounts.UpdateAsync(id, partialEntity, ct); // PATCH (If-Match: *)
 await _accounts.UpsertAsync(id, fullEntity, ct);    // PUT
 ```
 
+## Atomic Change Sets (Batch)
+Use `IDataverseBatchService` when you need operations across multiple tables to succeed or fail as one transaction.
+
+```
+public class ContactWriteService
+{
+    private readonly IDataverseBatchService _batchService;
+
+    public ContactWriteService(IDataverseBatchService batchService)
+    {
+        _batchService = batchService;
+    }
+
+    public async Task UpdateContactAndCreateRelatedAsync(Guid contactId, CancellationToken ct)
+    {
+        var result = await _batchService
+            .CreateChangeSet()
+            .Update(
+                new DataverseKey("emailaddress1", "ada@example.com"),
+                new Contact
+                {
+                    ParentCustomerIdContact = Guid.NewGuid()
+                },
+                contentId: 1)
+            .Create(
+                new Account(),
+                contentId: 2)
+            .ExecuteAsync(ct);
+
+        var updatedContactId = result.GetCreatedEntityId(1);
+        var createdTaskId = result.GetCreatedEntityId(2);
+    }
+}
+```
+
+Notes:
+- `GET` is not allowed inside a change set.
+- Operations are executed in order and rolled back if one fails.
+- Use `contentId` + `$n` references when one operation depends on a created record URI.
+- Alternate keys are supported through `DataverseKey` in typed overloads, for example `new DataverseKey("emailaddress1", "ada@example.com")`.
+
+If you build operations directly (without the fluent builder), pass the shared `JsonSerializerOptions` explicitly:
+```
+var jsonOptions = serviceProvider.GetRequiredService<JsonSerializerOptions>();
+
+var updateOperation = DataverseBatchOperation.Update(
+    new DataverseKey("emailaddress1", "ada@example.com"),
+    new Contact { ParentCustomerIdContact = Guid.NewGuid() },
+    jsonOptions,
+    contentId: 1);
+
+var createOperation = DataverseBatchOperation.Create(
+    new Account(),
+    jsonOptions,
+    contentId: 2);
+```
+
 ## RemoteExecutionContext Deserialization
 ```
 var context = JsonSerializer.Deserialize<DataverseExecutionContext>(jsonBody, new JsonSerializerOptions
@@ -275,7 +333,7 @@ builder.Services
 If you never call `AddDataverseJsonSerializerConfigurator` you still get sensible defaults (and optional lambda changes). If you only want configurators, omit the lambda. For more granular control over ordering, place logic in configurators instead of the lambda.
 
 ## Versioning
-Current: `1.0.6`. Breaking changes => major increment.
+Current: `1.0.7`. Breaking changes => major increment.
 
 ## License
 MIT (see `LICENSE`).

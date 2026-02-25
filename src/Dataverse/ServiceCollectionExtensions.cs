@@ -1,4 +1,5 @@
 ﻿using Mavrix.Common.Dataverse.AuthenticationTokenProvider;
+using Mavrix.Common.Dataverse.Batch;
 using Mavrix.Common.Dataverse.Clients;
 using Mavrix.Common.Dataverse.DTO;
 using Mavrix.Common.Dataverse.Options;
@@ -51,6 +52,8 @@ namespace Mavrix.Common.Dataverse
 
 			services.AddHttpClient<IDataverseHttpClient, DataverseHttpClient>()
 				.AddTooManyRequestRetryHandler();
+
+			services.TryAddSingleton<IDataverseBatchService, DataverseBatchService>();
 
 			return services;
 		}
