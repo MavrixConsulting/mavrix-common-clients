@@ -1,3 +1,4 @@
+using Mavrix.Common.Dataverse;
 using Mavrix.Common.Dataverse.QueryBuilder;
 using Xunit;
 
@@ -14,12 +15,20 @@ public class DataverseQueryBuilderBuildTests
 	}
 
 	[Fact]
-	public void Build_WithId_AppendsParentheses()
+	public void Build_WithDataverseKey_FromGuid_AppendsParentheses()
 	{
 		var id = Guid.NewGuid();
 		var sut = new DataverseQueryBuilder();
-		var result = sut.Build("accounts", id);
+		var result = sut.Build("accounts", new DataverseKey(id));
 		Assert.Equal($"accounts({id})", result);
+	}
+
+	[Fact]
+	public void Build_WithDataverseKey_AppendsParentheses()
+	{
+		var sut = new DataverseQueryBuilder();
+		var result = sut.Build("accounts", new DataverseKey("accountnumber", "ACC-001"));
+		Assert.Equal("accounts(accountnumber='ACC-001')", result);
 	}
 
 	[Fact]

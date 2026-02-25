@@ -35,6 +35,15 @@ namespace Mavrix.Common.Dataverse.AttributeTypes
 		}
 
 		/// <summary>
+		/// Initializes a new lookup using a Dataverse key.
+		/// </summary>
+		/// <param name="key">The Dataverse key.</param>
+		public Lookup(DataverseKey key)
+			: this(key.KeyExpression)
+		{
+		}
+
+		/// <summary>
 		/// Initializes a new lookup using a raw key expression.
 		/// </summary>
 		/// <param name="keyExpression">The Dataverse key expression used inside the bind path.</param>
@@ -98,6 +107,13 @@ namespace Mavrix.Common.Dataverse.AttributeTypes
 		/// <param name="id">The nullable record ID.</param>
 		/// <returns>A lookup when the ID has a value; otherwise <see langword="null"/>.</returns>
 		public static implicit operator Lookup<T>?(Guid? id) => id.HasValue ? new Lookup<T>(id.Value.ToString()) : null;
+
+		/// <summary>
+		/// Converts a Dataverse key to a lookup instance.
+		/// </summary>
+		/// <param name="key">The Dataverse key.</param>
+		/// <returns>A lookup targeting the specified key.</returns>
+		public static implicit operator Lookup<T>(DataverseKey key) => new(key);
 
 		private static string EscapeKeyValue(string keyValue) => keyValue.Replace("'", "''");
 

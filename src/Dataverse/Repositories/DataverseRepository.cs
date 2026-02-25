@@ -47,6 +47,12 @@ namespace Mavrix.Common.Dataverse.Repositories
 		/// <inheritdoc />
 		public async ValueTask<T?> GetAsync(Guid key, DataverseQueryBuilder queryBuilder, CancellationToken cancellationToken)
 		{
+			return await GetAsync((DataverseKey)key, queryBuilder, cancellationToken);
+		}
+
+		/// <inheritdoc />
+		public async ValueTask<T?> GetAsync(DataverseKey key, DataverseQueryBuilder queryBuilder, CancellationToken cancellationToken)
+		{
 			var uri = queryBuilder.Build(_setName, key);
 			return await _client.GetAsync<T>(uri, cancellationToken, queryBuilder.IncludeAnnotations);
 		}
@@ -64,23 +70,41 @@ namespace Mavrix.Common.Dataverse.Repositories
 		/// <inheritdoc />
 		public async ValueTask UpdateAsync(Guid key, T record, CancellationToken cancellationToken)
 		{
+			await UpdateAsync((DataverseKey)key, record, cancellationToken);
+		}
+
+		/// <inheritdoc />
+		public async ValueTask UpdateAsync(DataverseKey key, T record, CancellationToken cancellationToken)
+		{
 			var content = JsonContent.Create(record, options: _jsonSerializerOptions);
-			var uri = $"{_setName}({key})";
+			var uri = $"{_setName}({key.KeyExpression})";
 			await _client.UpdateAsync(uri, content, cancellationToken);
 		}
 
 		/// <inheritdoc />
 		public async ValueTask UpsertAsync(Guid key, T record, CancellationToken cancellationToken)
 		{
+			await UpsertAsync((DataverseKey)key, record, cancellationToken);
+		}
+
+		/// <inheritdoc />
+		public async ValueTask UpsertAsync(DataverseKey key, T record, CancellationToken cancellationToken)
+		{
 			var content = JsonContent.Create(record, options: _jsonSerializerOptions);
-			var uri = $"{_setName}({key})";
+			var uri = $"{_setName}({key.KeyExpression})";
 			await _client.UpsertAsync(uri, content, cancellationToken);
 		}
 
 		/// <inheritdoc />
 		public async ValueTask DeleteAsync(Guid key, CancellationToken cancellationToken)
 		{
-			var uri = $"{_setName}({key})";
+			await DeleteAsync((DataverseKey)key, cancellationToken);
+		}
+
+		/// <inheritdoc />
+		public async ValueTask DeleteAsync(DataverseKey key, CancellationToken cancellationToken)
+		{
+			var uri = $"{_setName}({key.KeyExpression})";
 			await _client.DeleteAsync(uri, cancellationToken);
 		}
 
