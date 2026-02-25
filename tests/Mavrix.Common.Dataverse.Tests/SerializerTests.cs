@@ -118,6 +118,26 @@ namespace Mavrix.Common.Dataverse.Tests
 		}
 
 		[Fact]
+		public void Lookup_Field_Serializes_To_OData_Bind_Value_With_DataverseKey()
+		{
+			// Arrange
+			var key = new DataverseKey("AccountNumber", "ACC-001");
+			var contact = new DTO.Contact
+			{
+				AccountId = new(key)
+			};
+
+			// Act
+			var json = System.Text.Json.JsonSerializer.Serialize(contact,
+				Serialization.DataverseJsonSerializerOptionsFactory.Create(null, []));
+
+			// Assert
+			using var document = System.Text.Json.JsonDocument.Parse(json);
+			Assert.True(document.RootElement.TryGetProperty("AccountId@odata.bind", out var property));
+			Assert.Equal("/accounts(AccountNumber='ACC-001')", property.GetString());
+		}
+
+		[Fact]
 		public void Null_Lookup_Field_Is_Omitted_With_Default_Dataverse_Serializer_Options()
 		{
 			// Arrange

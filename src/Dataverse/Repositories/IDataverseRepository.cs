@@ -31,6 +31,12 @@ namespace Mavrix.Common.Dataverse.Repositories
 		/// <param name="cancellationToken">Cancellation token for the request.</param>
 		ValueTask DeleteAsync(Guid key, CancellationToken cancellationToken);
 		/// <summary>
+		/// Deletes a record from the Dataverse set.
+		/// </summary>
+		/// <param name="key">Dataverse key expression identifying the record to remove.</param>
+		/// <param name="cancellationToken">Cancellation token for the request.</param>
+		ValueTask DeleteAsync(DataverseKey key, CancellationToken cancellationToken);
+		/// <summary>
 		/// Removes the relationship between the source record and the specified target record.
 		/// </summary>
 		/// <param name="sourceKey">Primary key of the source record.</param>
@@ -47,6 +53,14 @@ namespace Mavrix.Common.Dataverse.Repositories
 		/// <returns>The matching record or <c>null</c> when not found.</returns>
 		ValueTask<T?> GetAsync(Guid key, DataverseQueryBuilder queryBuilder, CancellationToken cancellationToken);
 		/// <summary>
+		/// Retrieves a single record by key using the provided query builder.
+		/// </summary>
+		/// <param name="key">Dataverse key expression identifying the record.</param>
+		/// <param name="queryBuilder">Builder describing select, expand, or annotation options.</param>
+		/// <param name="cancellationToken">Cancellation token for the request.</param>
+		/// <returns>The matching record or <c>null</c> when not found.</returns>
+		ValueTask<T?> GetAsync(DataverseKey key, DataverseQueryBuilder queryBuilder, CancellationToken cancellationToken);
+		/// <summary>
 		/// Streams records that satisfy the provided query definition.
 		/// </summary>
 		/// <param name="queryBuilder">Builder describing filters, selects, and pagination.</param>
@@ -61,12 +75,26 @@ namespace Mavrix.Common.Dataverse.Repositories
 		/// <param name="cancellationToken">Cancellation token for the request.</param>
 		ValueTask UpdateAsync(Guid key, T record, CancellationToken cancellationToken);
 		/// <summary>
+		/// Updates an existing record identified by the supplied key.
+		/// </summary>
+		/// <param name="key">Dataverse key expression of the record to update.</param>
+		/// <param name="record">Payload containing the updated fields.</param>
+		/// <param name="cancellationToken">Cancellation token for the request.</param>
+		ValueTask UpdateAsync(DataverseKey key, T record, CancellationToken cancellationToken);
+		/// <summary>
 		/// Upserts a record, creating or updating it based on the provided key.
 		/// </summary>
 		/// <param name="key">Primary key used for the upsert target.</param>
 		/// <param name="record">Payload to create or update.</param>
 		/// <param name="cancellationToken">Cancellation token for the request.</param>
 		ValueTask UpsertAsync(Guid key, T record, CancellationToken cancellationToken);
+		/// <summary>
+		/// Upserts a record, creating or updating it based on the provided key.
+		/// </summary>
+		/// <param name="key">Dataverse key expression used for the upsert target.</param>
+		/// <param name="record">Payload to create or update.</param>
+		/// <param name="cancellationToken">Cancellation token for the request.</param>
+		ValueTask UpsertAsync(DataverseKey key, T record, CancellationToken cancellationToken);
 		/// <summary>
 		/// Removes the reference value from a lookup property on the specified record.
 		/// </summary>

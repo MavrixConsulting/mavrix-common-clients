@@ -162,14 +162,18 @@ namespace Mavrix.Common.Dataverse.QueryBuilder
 		}
 
 		/// <summary>
-		/// Builds the query string for the specified resource and identifier.
+		/// Builds the query string for the specified resource and key.
 		/// </summary>
 		/// <param name="resource">The resource to query.</param>
-		/// <param name="id">The unique identifier of the record.</param>
+		/// <param name="key">The Dataverse key.</param>
 		/// <returns>The composed query string.</returns>
-		public string Build(string? resource, Guid? id)
+		public string Build(string? resource, DataverseKey key)
 		{
-			return BuildCore(new StringBuilder(resource).Append('(').Append(id).Append(')').Append('?'));
+			if (string.IsNullOrWhiteSpace(key.KeyExpression))
+			{
+				throw new ArgumentException("Key expression cannot be null or whitespace.", nameof(key));
+			}
+			return BuildCore(new StringBuilder(resource).Append('(').Append(key.KeyExpression).Append(')').Append('?'));
 		}
 
 		/// <summary>

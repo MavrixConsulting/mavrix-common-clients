@@ -86,6 +86,44 @@ Notes:
 - String key values are escaped automatically for single quotes.
 - Serialized output is written as the correct bind path (for example `/accounts(<key>)`).
 
+## DataverseKey
+Use `DataverseKey` when you need to address records by GUID, alternate keys, composite alternate keys, or a raw key expression.
+
+Create keys:
+```
+var byGuid = new DataverseKey(accountId);
+
+// Single alternate key: accountnumber='ACME-001'
+var byAltKey = new DataverseKey("accountnumber", "ACME-001");
+
+// Composite alternate key: customercode='ACME',region='EU'
+var byComposite = new DataverseKey(("customercode", "ACME"), ("region", "EU"));
+
+// Raw key expression when needed
+var byRaw = new DataverseKey("accountnumber='ACME-001'");
+```
+
+Use keys with repository overloads:
+```
+var qb = new DataverseQueryBuilder().Select("accountid", "name");
+
+var account = await _accounts.GetAsync(byAltKey, qb, ct);
+await _accounts.UpdateAsync(byAltKey, partialEntity, ct);
+await _accounts.UpsertAsync(byAltKey, fullEntity, ct);
+await _accounts.DeleteAsync(byAltKey, ct);
+```
+
+Use keys with lookup values:
+```
+var parentKey = new DataverseKey("accountnumber", "ACME-001");
+contact.AccountId = parentKey; // implicit DataverseKey -> Lookup<Account>
+```
+
+When to use `Guid` vs `DataverseKey`:
+- Use `Guid` overloads when you already have the Dataverse record ID.
+- Use `DataverseKey` overloads when you need alternate key support, composite key support, or want to pass a raw OData key expression.
+- `DataverseKey` also keeps key construction consistent between repository methods and `Lookup<T>` assignments.
+
 ## Basic CRUD
 ```
 public class AccountService
@@ -118,7 +156,7 @@ Expand + nested select + annotations:
 var qb = new DataverseQueryBuilder()
     .Select("accountid","name")
     .AddExpand(new ExpandBuilder("primarycontactid").WithSelect("fullname","emailaddress1"))
-    .SetInludeAnnotations();
+    .SetIncludeAnnotations();
 var account = await _accounts.GetAsync(id, qb, ct);
 ```
 Order + count:
@@ -181,7 +219,7 @@ builder.Services.AddDataverseClient(builder.Configuration, useManagedIdentity: f
 ## Include Annotations
 Add `Prefer: odata.include-annotations="*"` via:
 ```
-var qb = new DataverseQueryBuilder().SetInludeAnnotations();
+var qb = new DataverseQueryBuilder().SetIncludeAnnotations();
 ```
 
 ## Error Handling
