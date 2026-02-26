@@ -62,6 +62,13 @@ namespace Mavrix.Common.Dataverse.Clients
 		/// <param name="cancellationToken">Token to cancel the operation.</param>
 		ValueTask DeleteAsync(string uri, CancellationToken cancellationToken);
 		/// <summary>
+		/// Executes a Dataverse <c>$batch</c> request.
+		/// </summary>
+		/// <param name="content">Multipart batch request content.</param>
+		/// <param name="cancellationToken">Token to cancel the operation.</param>
+		/// <returns>The batch response message.</returns>
+		ValueTask<HttpResponseMessage> ExecuteBatchAsync(HttpContent content, CancellationToken cancellationToken);
+		/// <summary>
 		/// Gets the base API URL used by the client.
 		/// </summary>
 		string ApiUrl { get; }
@@ -187,6 +194,36 @@ namespace Mavrix.Common.Dataverse.Clients
 			{
 				return;
 			}
+		}
+
+		/// <inheritdoc />
+		public async ValueTask<HttpResponseMessage> ExecuteBatchAsync(HttpContent content, CancellationToken cancellationToken)
+		{
+			var requestUri = new Uri($"{ApiUrl}/$batch");
+
+			var request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Post,
+				RequestUri = requestUri,
+				Content = content
+			};
+
+			request.Headers.Add("OData-Version", "4.0");
+			request.Headers.Add("OData-MaxVersion", "4.0");
+
+			await SetAuthorizationHeader(request, cancellationToken);
+
+			var response = await _httpClient.SendAsync(request, cancellationToken);
+
+			if (response.IsSuccessStatusCode)
+			{
+				return response;
+			}
+
+			var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+			_logger.LogError("Dataverse batch request failed. Statuscode: {Statuscode}, Message: {Message}", response.StatusCode, errorContent);
+			throw new DataverseHttpClientException(response.StatusCode, errorContent);
 		}
 
 		/// <summary>
