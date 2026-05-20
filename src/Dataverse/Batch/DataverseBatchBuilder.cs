@@ -15,7 +15,7 @@ namespace Mavrix.Common.Dataverse.Batch
 	///     .ExecuteAsync(cancellationToken);
 	/// </code>
 	/// </example>
-	public sealed class DataverseBatchBuilder
+	public sealed class DataverseBatchBuilder : IDataverseChangeSet
 	{
 		private readonly IDataverseBatchService _batchService;
 		private readonly JsonSerializerOptions _jsonSerializerOptions;
@@ -26,6 +26,11 @@ namespace Mavrix.Common.Dataverse.Batch
 			_batchService = batchService;
 			_jsonSerializerOptions = jsonSerializerOptions;
 		}
+
+		/// <summary>
+		/// Gets operations currently added to the change set in insertion order.
+		/// </summary>
+		public IReadOnlyCollection<DataverseBatchOperation> Operations => _operations;
 
 		/// <summary>
 		/// Adds a create operation to the change set.
@@ -87,6 +92,26 @@ namespace Mavrix.Common.Dataverse.Batch
 		public ValueTask<DataverseBatchResult> ExecuteAsync(CancellationToken cancellationToken)
 		{
 			return _batchService.ExecuteChangeSetAsync(_operations, cancellationToken);
+		}
+
+		IDataverseChangeSet IDataverseChangeSet.Create<TTable>(TTable payload, int? contentId, IReadOnlyDictionary<string, string>? headers)
+		{
+			return Create(payload, contentId, headers);
+		}
+
+		IDataverseChangeSet IDataverseChangeSet.Update<TTable>(DataverseKey key, TTable payload, int? contentId, IReadOnlyDictionary<string, string>? headers)
+		{
+			return Update(key, payload, contentId, headers);
+		}
+
+		IDataverseChangeSet IDataverseChangeSet.Upsert<TTable>(DataverseKey key, TTable payload, int? contentId, IReadOnlyDictionary<string, string>? headers)
+		{
+			return Upsert(key, payload, contentId, headers);
+		}
+
+		IDataverseChangeSet IDataverseChangeSet.Delete<TTable>(DataverseKey key, int? contentId, IReadOnlyDictionary<string, string>? headers)
+		{
+			return Delete<TTable>(key, contentId, headers);
 		}
 	}
 }

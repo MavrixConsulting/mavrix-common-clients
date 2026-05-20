@@ -230,6 +230,50 @@ Notes:
 - Use `contentId` + `$n` references when one operation depends on a created record URI.
 - Alternate keys are supported through `DataverseKey` in typed overloads, for example `new DataverseKey("emailaddress1", "ada@example.com")`.
 
+### Batch testability seam
+- Inspect built operations before execution in tests by using `IDataverseChangeSet`:
+  - `IReadOnlyCollection<DataverseBatchOperation> Operations`
+
+Unit test example:
+```
+[Fact]
+public async Task Handler_Builds_Expected_Batch_Operations_With_Mocked_BatchService()
+{
+    // Arrange
+    var jsonOptions = new JsonSerializerOptions();
+    var httpClient = Substitute.For<IDataverseHttpClient>();
+    httpClient.ApiUrl.Returns("https://org.crm4.dynamics.com/api/data/v9.2");
+    httpClient.ExecuteBatchAsync(Arg.Any<HttpContent>(), Arg.Any<CancellationToken>())
+              .Returns(new HttpResponseMessage(HttpStatusCode.OK));
+
+    // Real change set instance used only for recording operations
+    var realBatchService = new DataverseBatchService(httpClient, jsonOptions);
+    var recordedChangeSet = realBatchService.CreateChangeSet();
+
+    // Your app/service still gets IDataverseBatchService via DI (mocked)
+    var batchService = Substitute.For<IDataverseBatchService>();
+    batchService.CreateChangeSet().Returns(recordedChangeSet);
+
+    var sut = new ContactWriteService(batchService);
+    var contactId = Guid.NewGuid();
+
+    // Act
+    await sut.UpdateContactAndCreateRelatedAsync(contactId, CancellationToken.None);
+
+    var operations = ((IDataverseChangeSet)recordedChangeSet).Operations.ToList();
+
+    // Assert
+    Assert.Equal(2, operations.Count);
+    Assert.Equal(HttpMethod.Patch, operations[0].Method);
+    Assert.Equal("contacts(emailaddress1='ada@example.com')", operations[0].Uri);
+    Assert.Equal(HttpMethod.Post, operations[1].Method);
+    Assert.Equal("accounts", operations[1].Uri);
+
+    var firstBody = await operations[0].Content!.ReadAsStringAsync();
+    Assert.Contains("ParentCustomerId_contact@odata.bind", firstBody);
+}
+```
+
 If you build operations directly (without the fluent builder), pass the shared `JsonSerializerOptions` explicitly:
 ```
 var jsonOptions = serviceProvider.GetRequiredService<JsonSerializerOptions>();

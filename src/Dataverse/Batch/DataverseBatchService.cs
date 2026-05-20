@@ -1,4 +1,5 @@
 using Mavrix.Common.Dataverse.Clients;
+using Mavrix.Common.Dataverse.DTO;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -56,6 +57,60 @@ namespace Mavrix.Common.Dataverse.Batch
 		/// Gets the raw operation response body when present.
 		/// </summary>
 		public string? ResponseBody { get; init; }
+	}
+
+	/// <summary>
+	/// Represents a fluent Dataverse change set that can be inspected before execution.
+	/// </summary>
+	public interface IDataverseChangeSet
+	{
+		/// <summary>
+		/// Gets operations currently added to the change set in insertion order.
+		/// </summary>
+		IReadOnlyCollection<DataverseBatchOperation> Operations { get; }
+
+		/// <summary>
+		/// Adds a create operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Create<TTable>(
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds an update operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Update<TTable>(
+			DataverseKey key,
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds an upsert operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Upsert<TTable>(
+			DataverseKey key,
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds a delete operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Delete<TTable>(
+			DataverseKey key,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Executes the built operations as an atomic Dataverse change set.
+		/// </summary>
+		ValueTask<DataverseBatchResult> ExecuteAsync(CancellationToken cancellationToken);
 	}
 
 	/// <summary>
