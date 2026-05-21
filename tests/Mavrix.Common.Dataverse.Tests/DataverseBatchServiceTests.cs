@@ -114,6 +114,86 @@ namespace Mavrix.Common.Dataverse.Tests
 		}
 
 		[Fact]
+		public async Task CreateChangeSet_Exposes_Inspectable_Operations_Before_Execution()
+		{
+			// Arrange
+			var client = Substitute.For<IDataverseHttpClient>();
+			client.ApiUrl.Returns("https://org.crm4.dynamics.com/api/data/v9.2");
+
+			var service = new DataverseBatchService(client, JsonOptions);
+			var contactParentId = Guid.NewGuid();
+
+			// Act
+			IDataverseChangeSet changeSet = service.CreateChangeSet();
+			changeSet
+				.Update(
+					new DataverseKey("emailaddress1", "ada@example.com"),
+					new Contact { ParentCustomerIdContact = contactParentId },
+					contentId: 11,
+					headers: new Dictionary<string, string> { ["x-custom-update"] = "update-header" })
+				.Create(
+					new Contact { ParentCustomerIdAccount = new DataverseKey("accountnumber", "ACME-001") },
+					contentId: 12,
+					headers: new Dictionary<string, string> { ["x-custom-create"] = "create-header" });
+
+			// Assert
+			Assert.Equal(2, changeSet.Operations.Count);
+
+			var updateOperation = changeSet.Operations.First();
+			Assert.Equal(HttpMethod.Patch, updateOperation.Method);
+			Assert.Equal("contacts(emailaddress1='ada@example.com')", updateOperation.Uri);
+			Assert.Equal(11, updateOperation.ContentId);
+			Assert.Equal("*", updateOperation.Headers["If-Match"]);
+			Assert.Equal("update-header", updateOperation.Headers["x-custom-update"]);
+			Assert.NotNull(updateOperation.Content);
+			var updateBody = await updateOperation.Content!.ReadAsStringAsync();
+			Assert.Contains("ParentCustomerId_contact@odata.bind", updateBody);
+			Assert.Contains(contactParentId.ToString(), updateBody);
+
+			var createOperation = changeSet.Operations.Last();
+			Assert.Equal(HttpMethod.Post, createOperation.Method);
+			Assert.Equal("contacts", createOperation.Uri);
+			Assert.Equal(12, createOperation.ContentId);
+			Assert.Equal("create-header", createOperation.Headers["x-custom-create"]);
+			Assert.NotNull(createOperation.Content);
+			var createBody = await createOperation.Content!.ReadAsStringAsync();
+			Assert.Contains("ParentCustomerId_account@odata.bind", createBody);
+			Assert.Contains("ACME-001", createBody);
+		}
+
+		[Fact]
+		public async Task Inspecting_Operations_Does_Not_Change_Execute_Request_Behavior()
+		{
+			// Arrange
+			var client = Substitute.For<IDataverseHttpClient>();
+			client.ApiUrl.Returns("https://org.crm4.dynamics.com/api/data/v9.2");
+
+			HttpContent? capturedBatchContent = null;
+			client.ExecuteBatchAsync(Arg.Do<HttpContent>(content => capturedBatchContent = content), Arg.Any<CancellationToken>())
+				.Returns(new HttpResponseMessage(HttpStatusCode.OK));
+
+			var service = new DataverseBatchService(client, JsonOptions);
+			var parentContactId = Guid.NewGuid();
+
+			// Act
+			var changeSet = service
+				.CreateChangeSet()
+				.Create(new Contact { ParentCustomerIdContact = parentContactId }, contentId: 1);
+
+			var operationBody = await ((IDataverseChangeSet)changeSet).Operations.Single().Content!.ReadAsStringAsync();
+			var result = await changeSet.ExecuteAsync(CancellationToken.None);
+
+			// Assert
+			Assert.Contains(parentContactId.ToString(), operationBody);
+			Assert.NotNull(capturedBatchContent);
+			var payload = await capturedBatchContent!.ReadAsStringAsync();
+			Assert.Contains("POST /api/data/v9.2/contacts HTTP/1.1", payload);
+			Assert.Contains("ParentCustomerId_contact@odata.bind", payload);
+			Assert.Contains(parentContactId.ToString(), payload);
+			Assert.Empty(result.OperationResults);
+		}
+
+		[Fact]
 		public async Task Fluent_ChangeSet_Builder_Uses_Service_For_Execution()
 		{
 			// Arrange

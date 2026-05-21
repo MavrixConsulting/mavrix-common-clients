@@ -1,4 +1,5 @@
 using Mavrix.Common.Dataverse.Clients;
+using Mavrix.Common.Dataverse.DTO;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -59,6 +60,60 @@ namespace Mavrix.Common.Dataverse.Batch
 	}
 
 	/// <summary>
+	/// Represents a fluent Dataverse change set that can be inspected before execution.
+	/// </summary>
+	public interface IDataverseChangeSet
+	{
+		/// <summary>
+		/// Gets operations currently added to the change set in insertion order.
+		/// </summary>
+		IReadOnlyList<DataverseBatchOperation> Operations { get; }
+
+		/// <summary>
+		/// Adds a create operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Create<TTable>(
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds an update operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Update<TTable>(
+			DataverseKey key,
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds an upsert operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Upsert<TTable>(
+			DataverseKey key,
+			TTable payload,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Adds a delete operation to the change set.
+		/// </summary>
+		IDataverseChangeSet Delete<TTable>(
+			DataverseKey key,
+			int? contentId = null,
+			IReadOnlyDictionary<string, string>? headers = null)
+			where TTable : DataverseTable;
+
+		/// <summary>
+		/// Executes the built operations as an atomic Dataverse change set.
+		/// </summary>
+		ValueTask<DataverseBatchResult> ExecuteAsync(CancellationToken cancellationToken);
+	}
+
+	/// <summary>
 	/// Service for executing Dataverse batch requests with atomic change sets.
 	/// </summary>
 	public interface IDataverseBatchService
@@ -84,7 +139,7 @@ namespace Mavrix.Common.Dataverse.Batch
 		/// <param name="operations">Operations to execute atomically in order.</param>
 		/// <param name="cancellationToken">Cancellation token for the request.</param>
 		/// <returns>Parsed operation results including content-id, status code, and created entity ids when returned.</returns>
-		ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken);
+		ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken);
 	}
 
 	/// <summary>
@@ -119,7 +174,7 @@ namespace Mavrix.Common.Dataverse.Batch
 		}
 
 		/// <inheritdoc />
-		public async ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken)
+		public async ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken)
 		{
 			ArgumentNullException.ThrowIfNull(operations);
 			if (operations.Count == 0)
@@ -138,7 +193,7 @@ namespace Mavrix.Common.Dataverse.Batch
 			return await DataverseBatchResponseParser.ParseAsync(response.Content, cancellationToken);
 		}
 
-		private async ValueTask<string> BuildChangeSetPayloadAsync(string batchBoundary, string changeSetBoundary, IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken)
+		private async ValueTask<string> BuildChangeSetPayloadAsync(string batchBoundary, string changeSetBoundary, IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken)
 		{
 			var payload = new StringBuilder();
 			payload.Append("--").Append(batchBoundary).Append(CrLf);
