@@ -30,7 +30,7 @@ namespace Mavrix.Common.Dataverse.Batch
 		/// <summary>
 		/// Gets operations currently added to the change set in insertion order.
 		/// </summary>
-		public IReadOnlyCollection<DataverseBatchOperation> Operations => _operations;
+		public IReadOnlyCollection<DataverseBatchOperation> Operations => _operations.AsReadOnly();
 
 		/// <summary>
 		/// Adds a create operation to the change set.
