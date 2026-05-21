@@ -232,7 +232,7 @@ Notes:
 
 ### Batch testability seam
 - Inspect built operations before execution in tests by using `IDataverseChangeSet`:
-  - `IReadOnlyCollection<DataverseBatchOperation> Operations`
+  - `IReadOnlyList<DataverseBatchOperation> Operations`
 
 Unit test example:
 ```

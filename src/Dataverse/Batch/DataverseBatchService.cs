@@ -139,7 +139,7 @@ namespace Mavrix.Common.Dataverse.Batch
 		/// <param name="operations">Operations to execute atomically in order.</param>
 		/// <param name="cancellationToken">Cancellation token for the request.</param>
 		/// <returns>Parsed operation results including content-id, status code, and created entity ids when returned.</returns>
-		ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken);
+		ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken);
 	}
 
 	/// <summary>
@@ -174,7 +174,7 @@ namespace Mavrix.Common.Dataverse.Batch
 		}
 
 		/// <inheritdoc />
-		public async ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken)
+		public async ValueTask<DataverseBatchResult> ExecuteChangeSetAsync(IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken)
 		{
 			ArgumentNullException.ThrowIfNull(operations);
 			if (operations.Count == 0)
@@ -193,7 +193,7 @@ namespace Mavrix.Common.Dataverse.Batch
 			return await DataverseBatchResponseParser.ParseAsync(response.Content, cancellationToken);
 		}
 
-		private async ValueTask<string> BuildChangeSetPayloadAsync(string batchBoundary, string changeSetBoundary, IReadOnlyCollection<DataverseBatchOperation> operations, CancellationToken cancellationToken)
+		private async ValueTask<string> BuildChangeSetPayloadAsync(string batchBoundary, string changeSetBoundary, IReadOnlyList<DataverseBatchOperation> operations, CancellationToken cancellationToken)
 		{
 			var payload = new StringBuilder();
 			payload.Append("--").Append(batchBoundary).Append(CrLf);
