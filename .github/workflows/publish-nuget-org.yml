@@ -49,8 +49,12 @@ jobs:
       run: |
         dotnet build src/Dataverse/Dataverse.csproj --no-restore --configuration Release
         dotnet pack src/Dataverse/Dataverse.csproj --configuration Release --output ./Artifacts /p:Version=$VERSION --include-symbols
+
+    - name: NuGet login (OIDC → temp API key)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
         
     - name: Push to nuget.org
-      env:
-        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      run: dotnet nuget push ./Artifacts/*.{nupkg,snupkg} --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push ./Artifacts/*.{nupkg,snupkg} --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
